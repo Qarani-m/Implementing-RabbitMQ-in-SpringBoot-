@@ -3,6 +3,7 @@ package mqproducer.service;
 import mqproducer.entity.DiskInfo;
 import mqproducer.entity.OsInfo;
 import mqproducer.entity.ServicesInfo;
+import org.springframework.stereotype.Service;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -14,7 +15,7 @@ import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
 import java.util.Map;
 
-//@Service
+@Service
 public class SystemInfo {
     private static final Runtime runtime = Runtime.getRuntime();
     public String osName() {
