@@ -6,10 +6,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MessageEntity {
-    private DiskInfo diskInfo;
-    private  OsInfo osInfo;
-    private MemInfo memInfo;
+public class ServicesInfo {
+    private String[] services;
     private double cpuLoad;
 }
 

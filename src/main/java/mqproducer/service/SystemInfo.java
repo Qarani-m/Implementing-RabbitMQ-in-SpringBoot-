@@ -1,90 +1,39 @@
 package mqproducer.service;
 
 import mqproducer.entity.DiskInfo;
-import org.springframework.stereotype.Service;
+import mqproducer.entity.OsInfo;
+import mqproducer.entity.ServicesInfo;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.io.File;
+import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.text.NumberFormat;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
 import java.util.Map;
 
-@Service
+//@Service
 public class SystemInfo {
-
-    private static Runtime runtime = Runtime.getRuntime();
-
-    public String info() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.osInfo());
-        sb.append(this.memInfo());
-        sb.append(this.diskInfo());
-        return sb.toString();
-    }
-
+    private static final Runtime runtime = Runtime.getRuntime();
     public String osName() {
         return System.getProperty("os.name");
     }
 
-    public String osVersion() {
-        return System.getProperty("os.version");
+    public  Map<String, String> osInfo() {
+        int numberOfCores = runtime.availableProcessors();
+        if (this.osName().contains("Linux") || this.osName().contains("Mac")){
+            OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+            numberOfCores = osBean.getAvailableProcessors();
+        }
+        Map<String, String> osinfo = new HashMap<>();
+        osinfo.put("os", this.osName());
+        osinfo.put("osVersion", System.getProperty("os.version"));
+        osinfo.put("osArch", System.getProperty("os.arch"));
+        osinfo.put("availableProcessors", String.valueOf(numberOfCores));
+        return osinfo;
     }
-
-    public String osArch() {
-        return System.getProperty("os.arch");
-    }
-
-    public long totalMem() {
-        return Runtime.getRuntime().totalMemory();
-    }
-
-    public long usedMem() {
-        return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-    }
-
-    public  String memInfo() {
-        NumberFormat format = NumberFormat.getInstance();
-        StringBuilder sb = new StringBuilder();
-        long maxMemory = runtime.maxMemory();
-        long allocatedMemory = runtime.totalMemory();
-        long freeMemory = runtime.freeMemory();
-        sb.append("Free memory: ");
-        sb.append(format.format(freeMemory / 1024));
-        sb.append("<br/>");
-        sb.append("Allocated memory: ");
-        sb.append(format.format(allocatedMemory / 1024));
-        sb.append("<br/>");
-        sb.append("Max memory: ");
-        sb.append(format.format(maxMemory / 1024));
-        sb.append("<br/>");
-        sb.append("Total free memory: ");
-        sb.append(format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024));
-        sb.append("<br/>");
-        return sb.toString();
-
-    }
-
-    public String osInfo() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("OS: ");
-        sb.append(this.osName());
-        sb.append("<br/>");
-        sb.append("Version: ");
-        sb.append(this.osVersion());
-        sb.append("<br/>");
-        sb.append(": ");
-        sb.append(this.osArch());
-        sb.append("<br/>");
-        sb.append("Available processors (cores): ");
-        sb.append(runtime.availableProcessors());
-        sb.append("<br/>");
-        return sb.toString();
-    }
-
     public Map<String, String> diskInfo() {
         Map<String, String> diskinfo = new HashMap<>();
         File file = new File("/");
@@ -92,10 +41,7 @@ public class SystemInfo {
         long totalSpace = file.getTotalSpace();
         long freeSpace = file.getFreeSpace();
         String systemRoot = null;
-
         File[] roots = File.listRoots();
-
-
         for (File root : roots) {
             try {
                 systemRoot = String.valueOf(root);
@@ -110,7 +56,6 @@ public class SystemInfo {
 
         return diskinfo;
     }
-
     // Helper method to format size in a human-readable format
     private static String formatSize(long bytes) {
         final long KILOBYTE = 1024;
@@ -128,7 +73,7 @@ public class SystemInfo {
         }
     }
 
-    public double getProcessCpuLoad() throws Exception {
+    public static double getProcessCpuLoadWindows() throws Exception {
         MBeanServer mbs    = ManagementFactory.getPlatformMBeanServer();
         ObjectName name    = ObjectName.getInstance("java.lang:type=OperatingSystem");
         AttributeList list = mbs.getAttributes(name, new String[]{ "ProcessCpuLoad" });
@@ -138,30 +83,123 @@ public class SystemInfo {
         if (value == -1.0)      return Double.NaN;
         return ((int)(value * 1000) / 10.0);
     }
+    public static double getProcessCpuLoadLinux() {
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("/proc/stat"));
+            String line;
+            long totalCpuTime1 = 0;
+            long idleTime1 = 0;
 
-    public static void main(String[] args) throws Exception {
-        SystemInfo systemInfo = new SystemInfo();
+            // Read the first line which contains total CPU time
+            if ((line = reader.readLine()) != null) {
+                String[] parts = line.trim().split("\\s+");
+                for (int i = 1; i < parts.length; i++) {
+                    totalCpuTime1 += Long.parseLong(parts[i]);
+                }
+                idleTime1 = Long.parseLong(parts[4]); // Idle time
+            }
 
-        DiskInfo diskInfo =new DiskInfo(
-                systemInfo.diskInfo().get("systemRoot"),
-                systemInfo.diskInfo().get("totalSpace"),
-                systemInfo.diskInfo().get("freeSpace"),
-                systemInfo.diskInfo().get("usableSpace")
-        );
+            reader.close();
 
+            // Sleep for a while
+            Thread.sleep(1000);
 
+            // Read /proc/stat again after a short delay
+            reader = new BufferedReader(new FileReader("/proc/stat"));
+            long totalCpuTime2 = 0;
+            long idleTime2 = 0;
 
+            // Read the first line which contains total CPU time
+            if ((line = reader.readLine()) != null) {
+                String[] parts = line.trim().split("\\s+");
+                for (int i = 1; i < parts.length; i++) {
+                    totalCpuTime2 += Long.parseLong(parts[i]);
+                }
+                idleTime2 = Long.parseLong(parts[4]); // Idle time
+            }
 
+            reader.close();
 
-
-//        System.out.println(systemInfo.getProcessCpuLoad());
-//        System.out.println(systemInfo.osInfo());
-
-
-
-        systemInfo.diskInfo();
-
-
+            // Calculate CPU usage percentage
+            long totalCpuTimeDiff = totalCpuTime2 - totalCpuTime1;
+            long idleTimeDiff = idleTime2 - idleTime1;
+            return 100.0 * (totalCpuTimeDiff - idleTimeDiff) / totalCpuTimeDiff;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+    public static String[] getServiceNamesLinux() throws IOException {
+        Process process = Runtime.getRuntime().exec("systemctl list-units --type service --state running");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line;
+        StringBuilder output = new StringBuilder();
+        while ((line = reader.readLine()) != null) {
+            output.append(line).append("\n");
+        }
+        process.destroy();
+        return output.toString().split("\\r?\\n");
+    }
+    public static String[] getServiceNamesWindows()throws IOException{return null;}
+    public  double getProcessorCpuLoad() throws Exception {
+        if (this.osName().contains("Linux") || this.osName().contains("Mac")){
+            return  getProcessCpuLoadLinux();
+        } else if (this.osName().contains("Windows")) {
+            return  getProcessCpuLoadWindows();
+        }else {return  0.0;}
+    }
+    public String[] getServiceNames() throws IOException {
+        if (this.osName().contains("Linux") || this.osName().contains("Mac")){
+            return  getServiceNamesLinux();
+        } else if (this.osName().contains("Windows")) {
+            return  getServiceNamesWindows();
+        }else {return  null;}
 
     }
+
+
+    public static void main(String[] args) throws Exception {
+        Thread thread = new Thread(() -> {
+            while (true) {
+                try {
+                    SystemInfo systemInfo = new SystemInfo();
+                    DiskInfo diskInfo = DiskInfo.builder()
+                            .systemRoot(systemInfo.diskInfo().get("systemRoot"))
+                            .totalSpace(systemInfo.diskInfo().get("totalSpace"))
+                            .freeSpace( systemInfo.diskInfo().get("freeSpace"))
+                            .usableSpace(systemInfo.diskInfo().get("usableSpace"))
+                            .build();
+                    OsInfo osInfo = OsInfo.builder()
+                            .os(systemInfo.osInfo().get("os"))
+                            .osVersion(systemInfo.osInfo().get("osVersion"))
+                            .osArch(systemInfo.osInfo().get("osArch"))
+                            .processors(systemInfo.osInfo().get("availableProcessors"))
+                            .build();
+                    ServicesInfo servicesInfo = ServicesInfo.builder()
+                            .services(systemInfo.getServiceNames())
+                            .cpuLoad(systemInfo.getProcessorCpuLoad())
+                            .build();
+                    System.out.println(diskInfo);
+                    System.out.println(osInfo);
+                    System.out.println(servicesInfo.getCpuLoad());
+
+                    Thread.sleep(1000); // Sleep for 2 seconds
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        thread.start();
+    }
+
+
+
+
+
+
+
 }
