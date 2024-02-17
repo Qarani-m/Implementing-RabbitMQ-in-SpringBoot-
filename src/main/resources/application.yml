@@ -1,2 +1,9 @@
+<<<<<<< HEAD
 server:
   port: 9043
+=======
+
+server:
+  port: 9044
+
+>>>>>>> 90ae7bc (Commit message here)

@@ -1,4 +1,4 @@
-package mqproducer.entity;
+package mqconsumer.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

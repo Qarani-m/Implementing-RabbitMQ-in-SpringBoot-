@@ -1,4 +1,4 @@
-package mqproducer.entity;
+package mqconsumer.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OsInfo{
-    private String os;
-    private String osVersion;
-    private String osArch;
-    private String processors;
+public class ServicesInfo {
+    private double cpuLoad;
 }
+
