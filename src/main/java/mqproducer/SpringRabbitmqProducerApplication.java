@@ -43,7 +43,6 @@ public class SpringRabbitmqProducerApplication {
 				.processors(systemInfo.osInfo().get("availableProcessors"))
 				.build();
 		ServicesInfo servicesInfo = ServicesInfo.builder()
-				.services(systemInfo.getServiceNames())
 				.cpuLoad(systemInfo.getProcessorCpuLoad())
 				.build();
 
@@ -86,7 +85,7 @@ public class SpringRabbitmqProducerApplication {
 		return scheduledExecutorService().scheduleAtFixedRate(
 				messagePublishingTask(),
 				0, // Initial delay
-				2, // Period (in seconds)
+				1, // Period (in seconds)
 				TimeUnit.SECONDS
 		);
 	}

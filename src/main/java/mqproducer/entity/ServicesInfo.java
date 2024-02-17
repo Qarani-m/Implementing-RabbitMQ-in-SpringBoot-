@@ -7,7 +7,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ServicesInfo {
-    private String[] services;
     private double cpuLoad;
 }
 

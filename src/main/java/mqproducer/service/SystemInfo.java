@@ -1,8 +1,5 @@
 package mqproducer.service;
 
-import mqproducer.entity.DiskInfo;
-import mqproducer.entity.OsInfo;
-import mqproducer.entity.ServicesInfo;
 import org.springframework.stereotype.Service;
 
 import javax.management.Attribute;
@@ -130,18 +127,7 @@ public class SystemInfo {
         }
         return 0.0;
     }
-    public static String[] getServiceNamesLinux() throws IOException {
-        Process process = Runtime.getRuntime().exec("systemctl list-units --type service --state running");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line;
-        StringBuilder output = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-            output.append(line).append("\n");
-        }
-        process.destroy();
-        return output.toString().split("\\r?\\n");
-    }
-    public static String[] getServiceNamesWindows()throws IOException{return null;}
+
     public  double getProcessorCpuLoad() throws Exception {
         if (this.osName().contains("Linux") || this.osName().contains("Mac")){
             return  getProcessCpuLoadLinux();
@@ -149,58 +135,6 @@ public class SystemInfo {
             return  getProcessCpuLoadWindows();
         }else {return  0.0;}
     }
-    public String[] getServiceNames() throws IOException {
-        if (this.osName().contains("Linux") || this.osName().contains("Mac")){
-            return  getServiceNamesLinux();
-        } else if (this.osName().contains("Windows")) {
-            return  getServiceNamesWindows();
-        }else {return  null;}
-
-    }
-
-
-    public static void main(String[] args) throws Exception {
-        Thread thread = new Thread(() -> {
-            while (true) {
-                try {
-                    SystemInfo systemInfo = new SystemInfo();
-                    DiskInfo diskInfo = DiskInfo.builder()
-                            .systemRoot(systemInfo.diskInfo().get("systemRoot"))
-                            .totalSpace(systemInfo.diskInfo().get("totalSpace"))
-                            .freeSpace( systemInfo.diskInfo().get("freeSpace"))
-                            .usableSpace(systemInfo.diskInfo().get("usableSpace"))
-                            .build();
-                    OsInfo osInfo = OsInfo.builder()
-                            .os(systemInfo.osInfo().get("os"))
-                            .osVersion(systemInfo.osInfo().get("osVersion"))
-                            .osArch(systemInfo.osInfo().get("osArch"))
-                            .processors(systemInfo.osInfo().get("availableProcessors"))
-                            .build();
-                    ServicesInfo servicesInfo = ServicesInfo.builder()
-                            .services(systemInfo.getServiceNames())
-                            .cpuLoad(systemInfo.getProcessorCpuLoad())
-                            .build();
-                    System.out.println(diskInfo);
-                    System.out.println(osInfo);
-                    System.out.println(servicesInfo.getCpuLoad());
-
-                    Thread.sleep(1000); // Sleep for 2 seconds
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-        thread.start();
-    }
-
-
-
-
-
 
 
 }

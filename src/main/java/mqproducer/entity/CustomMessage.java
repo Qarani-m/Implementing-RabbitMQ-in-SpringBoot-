@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CustomMessage {
+    private  ServicesInfo servicesInfo;
     private DiskInfo diskInfo;
     private OsInfo osInfo;
-    private  ServicesInfo servicesInfo;
 }
