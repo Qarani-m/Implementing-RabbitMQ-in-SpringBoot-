@@ -1,5 +1,6 @@
 package mqproducer.entity;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,8 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class MemInfo{
-    private String free;
-    private String total;
-    private String percentage;
+public class CustomMessage {
+    private DiskInfo diskInfo;
+    private OsInfo osInfo;
+    private  ServicesInfo servicesInfo;
 }
